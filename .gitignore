@@ -1,3 +1,5 @@
+*.sw*
+.rvmrc
 *.gem
 *.rbc
 .bundle

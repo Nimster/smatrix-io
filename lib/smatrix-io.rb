@@ -1,7 +1,5 @@
 require "smatrix-io/version"
 
-module Smatrix
-  module Io
-    # Your code goes here...
-  end
+module SmatrixIO
+  # Your code goes here...
 end

@@ -1,5 +1,3 @@
-module Smatrix
-  module Io
-    VERSION = "0.0.1"
-  end
+module SmatrixIO
+  VERSION = "0.0.1"
 end
