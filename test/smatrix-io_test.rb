@@ -1,32 +1,50 @@
-#require 'minitest/autorun'
-class LookupTest < MiniTest::Unit::TestCase
+$:.push File.expand_path('lib')
+require 'smatrix-io'
 
-  def setup
+module SmatrixIO
+  class SmatrixIOTest < MiniTest::Unit::TestCase
+
+    def setup
+    end
+
+    def teardown
+    end
+
+    def test_initializers
+      t = a_matrix
+      csr = CompressedRep.from_triplet(t)
+      raw_compare t, csr
+    end
+
+    # Compare the compressed and triplet representations
+    def raw_compare(triplet, compressed)
+      assert_equal triplet.nzValues.size, compressed.nzValues.size
+      assert_equal triplet.rowNames, compressed.rowNames
+      assert_equal triplet.colNames, compressed.colNames
+
+      triplet.rowIdx.zip(triplet.colIdx, triplet.nzValues).each do |i, j, v|
+        l = compressed.byRows ? i : j
+        m = compressed.byRows ? j : i
+        start = compressed.vecStartPtr[l]
+        k = compressed.vecIdx[start..(compressed.vecStartPtr[l + 1] - 1)].index(m)
+        refute k.nil?
+        assert_equal v, compressed.nzValues[start + k]
+      end
+    end
+
+    # A specified matrix for which we know the exact expected values and
+    # representations - to avoid symmetric errors
+    def a_matrix
+      rowNames = (1..4).collect { |i| "row" + i.to_s }
+      colNames = (1..4).collect { |i| "col" + i.to_s }
+      t = TripletRep.new(
+        [1,1,2,3,3], 
+        [1,3,1,1,3],
+        [1.0,1.0,2.0,3.0,2.0], 
+        rowNames, colNames)
+    end
+
+    def random_triplet_matrix
+    end
   end
-
-  def teardown
-  end
-
-  def test_initializers
-    assert_equal 0, CarKind.count
-    assert_equal 0, CarColor.count
-    bimba = Car.new(:name => "Bimba", :kind => "Compact", :color => "Yellow")
-    assert_equal "Yellow", bimba.color
-    assert_equal "Compact", bimba.kind
-    assert_equal "Bimba", bimba.name
-    assert_equal 1, CarKind.count
-    assert_equal 1, CarColor.count
-    ferrari = Car.new(:kind => "Sports", :color => "Yellow")
-    assert_equal "Yellow", ferrari.color
-    assert_equal "Sports", ferrari.kind
-    refute(ferrari == bimba)
-    assert_equal bimba.color_id, ferrari.color_id
-    refute_equal bimba.kind_id, ferrari.kind_id
-    assert_equal 2, CarKind.count
-    assert_equal 1, CarColor.count
-    f16 = Plane.new(:name => "F-16", :kind => "Fighter Jet")
-    assert_equal "Fighter Jet", f16.kind
-    assert_equal 1, PlaneKind.count
-  end
-
 end
