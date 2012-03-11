@@ -1,12 +1,35 @@
+# Module for holding and transforming sparse matrix representations in Ruby,
+# based on CSparse. The goal is to be able to read and write matrixes in both
+# triplet representations and compressed representations, using whichever is
+# more comfortable for the required operations and 
+#
+# See more on http://educated-guess.com/2011/02/22/sparse-matrices/
+# Follow me on twitter: @nimrodpriell
+#
+# Author::    Nimrod Priell (@nimrodpriell)
+# Copyright:: Copyright (c) 2012 Nimrod Priell
+# License::   Distributes under the same terms as Ruby
+#
+
 require "smatrix-io/version"
 
 module SmatrixIO
-  # Your code goes here...
-  
+
+  # Class for operations on triplet representation
   class TripletRep
     attr_reader :rowIdx, :colIdx, :nzValues
     attr_reader :rowNames, :colNames, :nrows, :ncols
 
+    # Directly create a triplet representation from the constituent triplets
+    # (provided as the 3 arrays +rowIdx+, +colIdx+ and +nzValues+) and
+    # optionally names for the rows and columns. If you don't want names, you
+    # have to provide the length of the rows and columns:
+    #
+    #     TripletRep.new([],[],[],nil,nil,4,3) # 4 rows, 3 columns matrix
+    #     
+    #     TripletRep.new([],[],[],%w[r1 r2], %w[c1 c2]) # 2 rows, 2 columns 
+    #     
+    # Note the internal representation is 0-based, so the first row has index 0
     def initialize(rowIdx, colIdx, nzValues, rowNames = nil, colNames = nil, 
                    nrows = rowNames.size, ncols = colNames.size)
       @rowIdx, @colIdx, @nzValues, @rowNames, @colNames, @nrows, @ncols = \
@@ -15,12 +38,18 @@ module SmatrixIO
 
   end
 
+  # Class for operations on compressed representations. You can create this from
+  # a triplet representation using 
+  #
+  #    CompressedRep.from_triplet(triplet)
   class CompressedRep
 
     attr_reader :nzValues, :vecIdx, :vecStartPtr
     attr_reader :rowNames, :colNames, :nrows, :ncols
     attr_reader :byRows
 
+    # Directly create a compressed vector representation from the constituent
+    # datum.
     def initialize(nzValues, vecIdx, vecStartPtr, 
                    rowNames = nil, colNames = nil,
                    nrows = rowNames.size, ncols = colNames.size, byRows = true)
@@ -30,8 +59,9 @@ module SmatrixIO
       
     end
 
-    # Adapted from CSparse's cs_compress() method
-    def self.from_triplet(triplet, byRows = true)
+    # Adapted from CSparse's cs_compress() method, this creates a *CSR* matrix.
+    # To change to CSC, call 'to_csc'
+    def self.from_triplet(triplet)
       m, n = triplet.nrows, triplet.ncols
       nz = triplet.nzValues.size
       nrows, ncols = m, n
@@ -71,7 +101,7 @@ module SmatrixIO
 
     # Returns a transposed copy of the matrix. If you exchange the row names and
     # column names after the operation, you have effectively swapped CSR with
-    # CSC and vice versa
+    # CSC and vice versa. This also has the side effect of sorting the vectors
     #
     # Adapted from CSparse
     def transpose()
@@ -99,5 +129,35 @@ module SmatrixIO
                         rowNames, n, m, byRows)
     end
 
+    # Returns the sparse matrix in CSC representation
+    def to_csc
+      to_direction(false)
+    end
+
+    # Returns the sparse matrix in CSR representation
+    alias_method :to_csr, :to_direction
+
+    # Returns the sparse matrix in the requested representation (CSR is the
+    # default)
+    def to_direction(byRows = true)
+      if byRows == @byRows
+        self
+      else
+        transpose.transpose_dim
+      end
+    end
+
+    # Internal method for switching the way we look at the matrix without
+    # changing the values. This is safe after a transpose and will turn a CSC
+    # matrix to a CSR one
+    def transpose_dim
+        # Switch the column names and row names
+        temp = @colNames
+        tempn = @ncols
+        @colNames = @rowNames
+        @ncols = @nrows
+        @rowNames = temp
+        @nrows = tempn
+    end
   end
 end
