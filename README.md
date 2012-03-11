@@ -7,7 +7,7 @@ columns.
 
 See [My blog post about sparse matrices][1]
 
-[1][http://educated-guess.com/2011/02/22/sparse-matrices/]
+[1]: http://educated-guess.com/2011/02/22/sparse-matrices/
 
 ## Installation
 
@@ -31,6 +31,7 @@ yourself. However, you can still move from various representations to others and
 operate on the matrix while keeping it sparse throughout, so you maintain
 efficiency and low memory requirements:
 
+```ruby
       rowNames = (1..4).collect { |i| "row" + i.to_s }
       colNames = (1..4).collect { |i| "col" + i.to_s }
       triplets = TripletRep.new(
@@ -46,6 +47,7 @@ efficiency and low memory requirements:
       csc = csc.pick_rows(2, 3, 0) # third, fourth, then first row. This will 
                                    # automatically change to CSR format.
       csc = csc.transpose
+```
 
 If you hold on for a little longer or write your own input-output formats
 (please contribute!) this could actually start being useful.
@@ -55,7 +57,7 @@ If you hold on for a little longer or write your own input-output formats
 You can run `rake test`. They're not much but they work. In fact the hard part
 of the code is all ported from [CSparse][2] so it is definitely solid.
 
-[2][http://www.cise.ufl.edu/research/sparse/CSparse/]
+[2]: http://www.cise.ufl.edu/research/sparse/CSparse/
 
 ## Contributing
 
