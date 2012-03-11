@@ -40,7 +40,7 @@ module SmatrixIO
     end
 
     def test_transpose
-      t = a_matrix
+      t = random_triplet_matrix
       csr = CompressedRep.from_triplet(t).transpose
       assert_equal t.nzValues.size, csr.nzValues.size
       assert_equal t.rowNames, csr.colNames
@@ -48,6 +48,26 @@ module SmatrixIO
 
       t.rowIdx.zip(t.colIdx, t.nzValues).each do |i, j, v|
         assert_equal v, get_value(csr, j, i)
+      end
+    end
+
+    def test_csc_to_csr
+      t = random_triplet_matrix
+      csr = CompressedRep.from_triplet(t) # Original
+
+      csc = csr.to_csc
+      csr = csc.to_csr # new CSR
+
+      assert_equal t.nzValues.size, csr.nzValues.size
+      assert_equal t.nzValues.size, csc.nzValues.size
+      assert_equal t.rowNames, csr.rowNames
+      assert_equal t.rowNames, csc.rowNames
+      assert_equal t.colNames, csr.colNames
+      assert_equal t.colNames, csc.colNames
+
+      t.rowIdx.zip(t.colIdx, t.nzValues).each do |i, j, v|
+        assert_equal v, get_value(csc, i, j)
+        assert_equal v, get_value(csr, i, j)
       end
     end
 
@@ -64,7 +84,7 @@ module SmatrixIO
     end
 
     def random_triplet_matrix
-      seed = rand(1000)
+      seed = rand(10**8)
       puts "Seed is #{seed}"
       srand(seed)
       rows = rand(9) + 1

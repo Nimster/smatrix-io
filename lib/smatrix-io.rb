@@ -154,14 +154,15 @@ module SmatrixIO
     # changing the values. This is safe after a transpose and will turn a CSC
     # matrix to a CSR one
     def transpose_dim
-        # Switch the column names and row names
-        temp = @colNames
-        tempn = @ncols
-        @colNames = @rowNames
-        @ncols = @nrows
-        @rowNames = temp
-        @nrows = tempn
-        @byRows = (not @byRows)
+      # Switch the column names and row names
+      temp = @colNames
+      tempn = @ncols
+      @colNames = @rowNames
+      @ncols = @nrows
+      @rowNames = temp
+      @nrows = tempn
+      @byRows = (not @byRows)
+      self
     end
   end
 end
