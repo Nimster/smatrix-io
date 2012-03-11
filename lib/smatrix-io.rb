@@ -126,7 +126,7 @@ module SmatrixIO
         end
       end
       CompressedRep.new(newNzValues, newVecIdx, newVecStartPtr, colNames, 
-                        rowNames, n, m, byRows)
+                        rowNames, n, m, @byRows)
     end
 
     # Returns the sparse matrix in CSC representation
@@ -158,6 +158,7 @@ module SmatrixIO
         @ncols = @nrows
         @rowNames = temp
         @nrows = tempn
+        @byRows = (not @byRows)
     end
   end
 end
