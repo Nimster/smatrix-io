@@ -27,12 +27,27 @@ module SmatrixIO
       assert_equal triplet.colNames, compressed.colNames
 
       triplet.rowIdx.zip(triplet.colIdx, triplet.nzValues).each do |i, j, v|
-        l = compressed.byRows ? i : j
-        m = compressed.byRows ? j : i
-        start = compressed.vecStartPtr[l]
-        k = compressed.vecIdx[start..(compressed.vecStartPtr[l + 1] - 1)].index(m)
-        refute k.nil?
-        assert_equal v, compressed.nzValues[start + k]
+        assert_equal v, get_value(compressed, i, j)
+      end
+    end
+
+    def get_value(compressed, i, j)
+      l = compressed.byRows ? i : j
+      m = compressed.byRows ? j : i
+      start = compressed.vecStartPtr[l]
+      k = compressed.vecIdx[start..(compressed.vecStartPtr[l + 1] - 1)].index(m)
+      k.nil? ? 0.0 : compressed.nzValues[start + k]
+    end
+
+    def test_transpose
+      t = a_matrix
+      csr = CompressedRep.from_triplet(t).transpose
+      assert_equal t.nzValues.size, csr.nzValues.size
+      assert_equal t.rowNames, csr.colNames
+      assert_equal t.colNames, csr.rowNames
+
+      t.rowIdx.zip(t.colIdx, t.nzValues).each do |i, j, v|
+        assert_equal v, get_value(csr, j, i)
       end
     end
 

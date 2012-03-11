@@ -91,12 +91,12 @@ module SmatrixIO
     # Adapted from CSparse
     def self.cs_cumsum(p, c)
       nz = 0
-      0.upto(p.size - 2) do |i|
+      0.upto(c.size - 1) do |i|
         p[i] = nz
         nz += c[i]
         c[i] = p[i]
       end
-      p[p.size] = nz
+      p[-1] = nz
     end
 
     # Returns a transposed copy of the matrix. If you exchange the row names and
@@ -106,7 +106,7 @@ module SmatrixIO
     # Adapted from CSparse
     def transpose()
       m, n = @nrows, @ncols
-      w = Array.new(@byRows ? n : m)
+      w = Array.new(@byRows ? n : m, 0)
       nz = @nzValues.size
       newNzValues = Array.new(nz)
       newVecIdx = Array.new(nz)
@@ -125,17 +125,12 @@ module SmatrixIO
           newNzValues[q] = @nzValues[p]
         end
       end
+      # TODO: This is undone by transpose_dim, so perhaps do the above in
+      # transpose_internal, and transpose_dim only if you need a real transpose
+      # and not just a CSR->CSC switch
       CompressedRep.new(newNzValues, newVecIdx, newVecStartPtr, colNames, 
                         rowNames, n, m, @byRows)
     end
-
-    # Returns the sparse matrix in CSC representation
-    def to_csc
-      to_direction(false)
-    end
-
-    # Returns the sparse matrix in CSR representation
-    alias_method :to_csr, :to_direction
 
     # Returns the sparse matrix in the requested representation (CSR is the
     # default)
@@ -146,6 +141,14 @@ module SmatrixIO
         transpose.transpose_dim
       end
     end
+
+    # Returns the sparse matrix in CSC representation
+    def to_csc
+      to_direction(false)
+    end
+
+    # Returns the sparse matrix in CSR representation
+    alias_method :to_csr, :to_direction
 
     # Internal method for switching the way we look at the matrix without
     # changing the values. This is safe after a transpose and will turn a CSC
