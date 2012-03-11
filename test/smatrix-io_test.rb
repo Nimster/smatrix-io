@@ -71,14 +71,44 @@ module SmatrixIO
       end
     end
 
+    def test_pick_rows
+      orig = a_matrix
+      csr = CompressedRep.from_triplet(orig)
+      matrix = csr.pick_rows(3, 2, 0)
+      assert_equal(orig.rowNames[3], matrix.rowNames[0])
+      assert_equal(orig.rowNames[2], matrix.rowNames[1])
+      assert_equal(orig.rowNames[0], matrix.rowNames[2])
+      assert_equal(orig.colNames, matrix.colNames)
+      assert_equal(4, matrix.nzValues.size)
+      p matrix
+      assert_equal(3, get_value(matrix, 1, 0))
+      assert_equal(2, get_value(matrix, 1, 2))
+      assert_equal(1, get_value(matrix, 2, 0))
+      assert_equal(1, get_value(matrix, 2, 2))
+     
+      # Now choose different rows
+      orig = a_matrix
+      csr = CompressedRep.from_triplet(orig)
+      matrix = csr.pick_rows(0, 1, 1)
+      assert_equal(orig.rowNames[0], matrix.rowNames[0])
+      assert_equal(orig.rowNames[1], matrix.rowNames[1])
+      assert_equal(orig.rowNames[1], matrix.rowNames[2])
+      assert_equal(orig.colNames, matrix.colNames)
+      assert_equal(4, matrix.nzValues.size)
+      assert_equal(1, get_value(matrix, 0, 0))
+      assert_equal(1, get_value(matrix, 0, 2))
+      assert_equal(2, get_value(matrix, 1, 0))
+      assert_equal(2, get_value(matrix, 2, 0))
+    end
+
     # A specified matrix for which we know the exact expected values and
     # representations - to avoid symmetric errors
     def a_matrix
       rowNames = (1..4).collect { |i| "row" + i.to_s }
       colNames = (1..4).collect { |i| "col" + i.to_s }
       TripletRep.new(
-        [1,1,2,3,3], 
-        [1,3,1,1,3],
+        [0,0,1,2,2], 
+        [0,2,0,0,2],
         [1.0,1.0,2.0,3.0,2.0], 
         rowNames, colNames)
     end

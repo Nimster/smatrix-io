@@ -164,5 +164,34 @@ module SmatrixIO
       @byRows = (not @byRows)
       self
     end
+
+    def pick_rows(*rows)
+      orig = self.to_csr # Then we can avoid running over the whole matrix
+      newRowNames = rows.collect { |r| @rowNames[r] }
+      newNzValues = rows.collect do |r| 
+        # unfortunately using ranges straightforward doesn't work because
+        # a[0..-1] is the whole array.
+        @nzValues.values_at(*(@vecStartPtr[r]..(@vecStartPtr[r + 1] - 1)).to_a)
+      end.flatten
+      newVecIdx = rows.collect do |r| 
+        @vecIdx.values_at(*(@vecStartPtr[r]..(@vecStartPtr[r + 1] - 1)).to_a)
+      end.flatten
+      newVecStartPtr = Array.new(rows.size + 1)
+      CompressedRep.cs_cumsum(newVecStartPtr, 
+        rows.collect { |r| @vecStartPtr[r + 1] - @vecStartPtr[r] })
+      orig.rowNames = newRowNames
+      orig.nrows = rows.size
+      orig.nzValues = newNzValues
+      orig.vecIdx = newVecIdx
+      orig.vecStartPtr = newVecStartPtr
+      orig
+    end
+
+    protected
+
+    attr_writer :nzValues, :vecIdx, :vecStartPtr
+    attr_writer :rowNames, :colNames, :nrows, :ncols
+    attr_writer :byRows
+
   end
 end
