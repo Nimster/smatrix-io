@@ -35,7 +35,8 @@ module SmatrixIO
       l = compressed.byRows ? i : j
       m = compressed.byRows ? j : i
       start = compressed.vecStartPtr[l]
-      k = compressed.vecIdx[start..(compressed.vecStartPtr[l + 1] - 1)].index(m)
+      k = compressed.vecIdx.values_at(\
+            *(start..(compressed.vecStartPtr[l + 1] - 1)).to_a).index(m)
       k.nil? ? 0.0 : compressed.nzValues[start + k]
     end
 
@@ -71,6 +72,22 @@ module SmatrixIO
       end
     end
 
+    def test_pick_cols
+      orig = a_matrix
+      csr = CompressedRep.from_triplet(orig)
+      matrix = csr.pick_cols(3, 2, 0)
+      assert_equal(orig.colNames[3], matrix.colNames[0])
+      assert_equal(orig.colNames[2], matrix.colNames[1])
+      assert_equal(orig.colNames[0], matrix.colNames[2])
+      assert_equal(orig.rowNames, matrix.rowNames)
+      assert_equal(5, matrix.nzValues.size)
+      assert_equal(1, get_value(matrix, 0, 1))
+      assert_equal(2, get_value(matrix, 2, 1))
+      assert_equal(1, get_value(matrix, 0, 2))
+      assert_equal(2, get_value(matrix, 1, 2))
+      assert_equal(3, get_value(matrix, 2, 2))
+    end
+     
     def test_pick_rows
       orig = a_matrix
       csr = CompressedRep.from_triplet(orig)
@@ -80,7 +97,6 @@ module SmatrixIO
       assert_equal(orig.rowNames[0], matrix.rowNames[2])
       assert_equal(orig.colNames, matrix.colNames)
       assert_equal(4, matrix.nzValues.size)
-      p matrix
       assert_equal(3, get_value(matrix, 1, 0))
       assert_equal(2, get_value(matrix, 1, 2))
       assert_equal(1, get_value(matrix, 2, 0))

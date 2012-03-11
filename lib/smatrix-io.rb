@@ -166,21 +166,35 @@ module SmatrixIO
     end
 
     def pick_rows(*rows)
-      orig = self.to_csr # Then we can avoid running over the whole matrix
+      orig = self.to_csr # Then we can avoid iterating over the whole matrix
       newRowNames = rows.collect { |r| @rowNames[r] }
-      newNzValues = rows.collect do |r| 
-        # unfortunately using ranges straightforward doesn't work because
-        # a[0..-1] is the whole array.
-        @nzValues.values_at(*(@vecStartPtr[r]..(@vecStartPtr[r + 1] - 1)).to_a)
-      end.flatten
-      newVecIdx = rows.collect do |r| 
-        @vecIdx.values_at(*(@vecStartPtr[r]..(@vecStartPtr[r + 1] - 1)).to_a)
-      end.flatten
-      newVecStartPtr = Array.new(rows.size + 1)
-      CompressedRep.cs_cumsum(newVecStartPtr, 
-        rows.collect { |r| @vecStartPtr[r + 1] - @vecStartPtr[r] })
+      orig = pick_vectors(orig, rows)
       orig.rowNames = newRowNames
       orig.nrows = rows.size
+      orig
+    end
+
+    def pick_cols(*cols)
+      orig = self.to_csc # Then we can avoid iterating over the whole matrix
+      newColNames = cols.collect { |r| @colNames[r] }
+      orig = pick_vectors(orig, cols)
+      orig.colNames = newColNames
+      orig.ncols = cols.size
+      orig
+    end
+ 
+    def pick_vectors(orig, vecs)
+      newNzValues = vecs.collect do |r| 
+        # unfortunately using ranges straightforward doesn't work because
+        # a[0..-1] is the whole array.
+        orig.nzValues.values_at(*(orig.vecStartPtr[r]..(orig.vecStartPtr[r + 1] - 1)).to_a)
+      end.flatten
+      newVecIdx = vecs.collect do |r| 
+        orig.vecIdx.values_at(*(orig.vecStartPtr[r]..(orig.vecStartPtr[r + 1] - 1)).to_a)
+      end.flatten
+      newVecStartPtr = Array.new(vecs.size + 1)
+      CompressedRep.cs_cumsum(newVecStartPtr, 
+        vecs.collect { |r| orig.vecStartPtr[r + 1] - orig.vecStartPtr[r] })
       orig.nzValues = newNzValues
       orig.vecIdx = newVecIdx
       orig.vecStartPtr = newVecStartPtr
