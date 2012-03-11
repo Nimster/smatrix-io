@@ -10,8 +10,12 @@ module SmatrixIO
     def teardown
     end
 
-    def test_initializers
+    def test_from_triplet
       t = a_matrix
+      csr = CompressedRep.from_triplet(t)
+      raw_compare t, csr
+
+      t = random_triplet_matrix
       csr = CompressedRep.from_triplet(t)
       raw_compare t, csr
     end
@@ -37,7 +41,7 @@ module SmatrixIO
     def a_matrix
       rowNames = (1..4).collect { |i| "row" + i.to_s }
       colNames = (1..4).collect { |i| "col" + i.to_s }
-      t = TripletRep.new(
+      TripletRep.new(
         [1,1,2,3,3], 
         [1,3,1,1,3],
         [1.0,1.0,2.0,3.0,2.0], 
@@ -45,6 +49,19 @@ module SmatrixIO
     end
 
     def random_triplet_matrix
+      seed = rand(1000)
+      puts "Seed is #{seed}"
+      srand(seed)
+      rows = rand(9) + 1
+      cols = rand(9) + 1
+      nz = rand(rows*cols)
+      selections = (0..(rows*cols-1)).to_a.sample(nz)
+      rowIdx = selections.collect { |s| s / cols }
+      colIdx = selections.collect { |s| s % cols }
+      nzValues = selections.collect { |s| (rand * 10)+0.001 }
+      rowNames = (1..rows).collect { |i| "row" + i.to_s }
+      colNames = (1..cols).collect { |i| "col" + i.to_s }
+      TripletRep.new(rowIdx, colIdx, nzValues, rowNames, colNames)
     end
   end
 end
